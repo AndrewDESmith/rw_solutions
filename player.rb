@@ -21,12 +21,12 @@ class Player
     feel_around_for_stairs_and_walls
     feel_around_for_empty_space
     # @stairs_direction = warrior.feel.stairs
-    pp "@captive_directions"
-    pp @captive_directions
-    pp "@enemy_directions"
-    pp @enemy_directions
-    pp "@occupied_directions"
-    pp @occupied_directions
+    # pp "@captive_directions"
+    # pp @captive_directions
+    # pp "@enemy_directions"
+    # pp @enemy_directions
+    # pp "@occupied_directions"
+    # pp @occupied_directions
 
     warrior_action
   end
@@ -44,7 +44,7 @@ class Player
     elsif one_adjacent_unbound_enemy?
       attack_enemy(@enemy_direction)
     elsif adjacent_captive?
-      captive_is_an_enemy ? attack_enemy(@bound_enemy_direction) : rescue_captive(@captive_direction)
+      captive_is_an_enemy ? attack_enemy_or_rest : rescue_captive(@captive_direction)
     # All captives rescued and no enemies in path.
     else
       walk_to(stairs_direction)
@@ -77,6 +77,14 @@ class Player
 
   def one_adjacent_unbound_enemy?
     @enemy_directions.size == 1
+  end
+
+  def attack_enemy_or_rest
+    warrior_is_injured? ? @warrior.rest! : attack_enemy(@bound_enemy_direction)
+  end
+
+  def warrior_is_injured?
+    @initial_warrior_health != @warrior.health
   end
 
   def adjacent_captive?

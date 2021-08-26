@@ -1,6 +1,6 @@
 class PlayerSurroundings
-  attr_accessor :bound_enemy_directions, :captive_directions, :enemy_directions, :empty_directions, :stairs_direction, :wall_directions
-  attr_reader :warrior
+  attr_accessor :bound_enemy_directions, :captive_directions, :direction_of_last_player_position, :enemy_directions, :empty_directions, :stairs_direction, :wall_directions
+  attr_reader :directions, :warrior
 
   def initialize(options)
     @captive_directions = options[:captive_directions]
@@ -9,6 +9,7 @@ class PlayerSurroundings
     @stairs_direction = options[:stairs_direction]
     @wall_directions = options[:wall_directions]
     @empty_directions = options[:empty_directions]
+    @direction_of_last_player_position = options[:direction_of_last_player_position]
     @warrior = options[:warrior]
   end
 

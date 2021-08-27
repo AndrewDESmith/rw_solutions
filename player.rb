@@ -51,7 +51,6 @@ class Player
     end
 
     if enemies_present?
-      # Can now slay enemies if there are no captives with bombs left.
       seek_out_and_slay_enemies
     else
       walk_to(stairs_direction)
@@ -60,7 +59,11 @@ class Player
 
   def seek_out_and_rescue_captives
     return true if rescue_captives_with_bombs
-    walk_to_captive if !adjacent_captives? && !adjacent_enemies
+
+    if !adjacent_captives? && !adjacent_enemies
+      captive_direction = @warrior.direction_of(@captive_spaces.first)
+      navigate_around_all_obstacles_towards(captive_direction)
+    end
   end
 
   def seek_out_and_slay_enemies
@@ -81,54 +84,36 @@ class Player
 
   # I never thought that I'd be writing named methods like this in Ruby, but here we are.
   def rescue_captives_with_bombs
-    # Rescue any immediately adjacent captives.
     if @player_surroundings.captive_directions.any?
       rescue_captive(@player_surroundings.captive_directions.first)
       return true
     else
-      # Navigate around enemies and stairs towards the captive with the bomb.
       captive_with_bomb_direction = @warrior.direction_of(@captive_spaces_with_bombs.first)
       navigate_around_all_obstacles_towards(captive_with_bomb_direction)
     end
   end
 
-  def walk_to_captive
-    captive_direction = @warrior.direction_of(@captive_spaces.first)
-    navigate_around_all_obstacles_towards(captive_direction)
+  def navigate_around_all_obstacles_towards(captive_direction)
+    obstacle_directions = @player_surroundings.enemy_directions + @player_surroundings.wall_directions
+
+    if captive_direction != @player_surroundings.stairs_direction
+      obstacle_directions.include?(captive_direction) ? pathfind_towards(captive_direction) : walk_to(captive_direction)
+    else
+      walk_around_stairs_using(@player_surroundings.empty_directions)
+    end
   end
 
-  def navigate_around_all_obstacles_towards(captive_direction)
-    empty_directions = @player_surroundings.empty_directions
-    obstacle_directions = @player_surroundings.enemy_directions + @player_surroundings.wall_directions
+  def pathfind_towards(captive_direction)
     possible_directions = []
 
-    # Head towards captive if no stairs are in the way.
-    if captive_direction != @player_surroundings.stairs_direction
-      # (1) Walk around enemies and walls.
-      # (2) Don't walk back the way you came. (use a direction of last move variable).
+    @player_surroundings.empty_directions.each do |empty_direction|
+      possible_directions << empty_direction if empty_direction != direction_warrior_moved_from
+    end
 
-      # No obstacles in the way of the captive's direction.
-      if !obstacle_directions.include?(captive_direction)
-        walk_to(captive_direction)
-      else
-        # Search for an alternative path with empty directions, but don't walk back the way you came.
-        empty_directions.each do |empty_direction|
-          possible_directions << empty_direction if empty_direction != direction_warrior_moved_from
-        end
-
-        # Prefer captive direction
-        if possible_directions.include?(captive_direction)
-          walk_to(captive_direction)
-        else
-          walk_to(possible_directions.first)
-        end
-      end
+    if possible_directions.include?(captive_direction)
+      walk_to(captive_direction)
     else
-      # Walk around stairs.
-      # empty_directions.each do |empty_direction|
-      #   empty_direction == @player_surroundings.stairs_direction ? next : walk_to(empty_direction)
-      # end
-      walk_around_stairs_using(empty_directions)
+      walk_to(possible_directions.first)
     end
   end
 

@@ -48,9 +48,7 @@ class Player
     if captives_present?
       seek_out_and_rescue_captives
       return true
-    end
-
-    if enemies_present?
+    elsif enemies_present?
       seek_out_and_slay_enemies
     else
       walk_to(stairs_direction)

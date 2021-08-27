@@ -20,4 +20,13 @@ module BasicWarriorActions
     @warrior.walk!(direction)
     return true
   end
+
+  def heal_when_injured
+    if warrior_is_injured?
+      @warrior.rest!
+      return true
+    else
+      return false
+    end
+  end
 end

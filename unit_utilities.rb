@@ -30,4 +30,8 @@ module UnitUtilities
 
     false
   end
+
+  def captives_with_bombs?
+    @captive_spaces_with_bombs.any?
+  end
 end

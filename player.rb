@@ -67,34 +67,76 @@ class Player
   end
 
   def seek_out_and_slay_enemies
-    adjacent_enemy_direction = @player_surroundings.enemy_directions.first
     adjacent_captive_direction = @player_surroundings.captive_directions.first
+    adjacent_enemy_directions = @player_surroundings.enemy_directions - @player_surroundings.bound_enemy_directions
 
     if multiple_adjacent_unbound_enemies?
-      bind_enemy(adjacent_enemy_direction)
+      @player_surroundings.enemy_directions.each do |enemy_direction|
+        if @warrior.direction_of(@captive_spaces_with_bombs.first) != enemy_direction
+          bind_adjacent_enemy(enemy_direction)
+          return true
+        end
+      end
     elsif one_adjacent_unbound_enemy?
-      attack_enemy(adjacent_enemy_direction)
+      attack_enemy(adjacent_enemy_directions.first)
     elsif adjacent_captives?
       captive_is_an_enemy?(adjacent_captive_direction) ? attack_enemy_or_rest : rescue_captive(adjacent_captive_direction)
-    else
+    elsif enemies_present?
       enemy_direction = @warrior.direction_of(@enemy_spaces.first)
       walk_to(enemy_direction)
+    elsif captives_present?
+      if warrior_is_injured?
+        @warrior.rest!
+        return true
+      end
+      captive_direction = @warrior.direction_of(@captive_spaces.first)
+      walk_to(captive_direction)
+    else
+      walk_to(@warrior.direction_of_stairs)
     end
+  end
+
+  def bind_adjacent_enemy(enemy_direction)
+    bind_enemy(enemy_direction)
   end
 
   # I never thought that I'd be writing named methods like this in Ruby, but here we are.
   def rescue_captives_with_bombs
-    if @player_surroundings.captive_directions.any?
-      rescue_captive(@player_surroundings.captive_directions.first)
-      return true
-    else
-      captive_with_bomb_direction = @warrior.direction_of(@captive_spaces_with_bombs.first)
-      navigate_around_all_obstacles_towards(captive_with_bomb_direction)
+    captive_directions = @player_surroundings.captive_directions
+    enemy_directions = @player_surroundings.enemy_directions
+
+    if @captive_spaces_with_bombs.first
+      direction_of_captive_with_bomb = @warrior.direction_of(@captive_spaces_with_bombs.first)
     end
+
+    captive_directions.each do |captive_direction|
+      if !captive_is_an_enemy?(captive_direction)
+        rescue_captive(captive_direction)
+        return true
+      elsif multiple_adjacent_unbound_enemies?
+        enemy_directions.each do |enemy_direction|
+          if direction_of_captive_with_bomb != enemy_direction
+            bind_adjacent_enemy(enemy_direction)
+            return true
+          end
+        end
+      elsif one_adjacent_unbound_enemy?
+        attack_enemy(enemy_directions.first)
+        return true
+      end
+    end
+
+    if @captive_spaces_with_bombs.empty?
+      seek_out_and_slay_enemies
+    else
+      navigate_around_all_obstacles_towards(direction_of_captive_with_bomb)
+    end
+
+    return true
   end
 
   def navigate_around_all_obstacles_towards(captive_direction)
-    obstacle_directions = @player_surroundings.enemy_directions + @player_surroundings.wall_directions
+    obstacle_directions = @player_surroundings.enemy_directions + @player_surroundings.wall_directions + @player_surroundings.bound_enemy_directions
 
     if captive_direction != @player_surroundings.stairs_direction
       obstacle_directions.include?(captive_direction) ? pathfind_towards(captive_direction) : walk_to(captive_direction)
@@ -112,6 +154,8 @@ class Player
 
     if possible_directions.include?(captive_direction)
       walk_to(captive_direction)
+    elsif possible_directions.empty?
+      seek_out_and_slay_enemies
     else
       walk_to(possible_directions.first)
     end
@@ -129,7 +173,8 @@ class Player
   end
 end
 
-#  ------
-# |Cs   >|
-# |@  sC |
-#  ------
+#  -----
+# | sC >|
+# |@ s C|
+# | s   |
+#  -----

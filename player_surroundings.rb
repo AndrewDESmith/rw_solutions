@@ -3,13 +3,13 @@ class PlayerSurroundings
   attr_reader :directions, :warrior
 
   def initialize(options)
-    @captive_directions = options[:captive_directions]
-    @enemy_directions = options[:enemy_directions]
-    @bound_enemy_directions = options[:bound_enemy_directions]
-    @stairs_direction = options[:stairs_direction]
-    @wall_directions = options[:wall_directions]
-    @empty_directions = options[:empty_directions]
-    @direction_of_last_player_position = options[:direction_of_last_player_position]
+    @captive_directions = []
+    @enemy_directions = []
+    @bound_enemy_directions = []
+    @stairs_direction = []
+    @wall_directions = []
+    @empty_directions = []
+    @direction_of_last_player_position = []
     @warrior = options[:warrior]
   end
 
@@ -26,6 +26,8 @@ class PlayerSurroundings
     self.captive_directions = feel_for("captive")
     self.enemy_directions = feel_for("enemy")
   end
+
+  private
 
   def feel_for(target)
     target_directions = []
